@@ -53,6 +53,8 @@ class GitCommand extends Command {
         echo exec( 'chmod -R og-rx .git' );
 
         $this->info('Succesfully run git pull for '.$repo->title);
+
+        return true;
     }
 
     /**
