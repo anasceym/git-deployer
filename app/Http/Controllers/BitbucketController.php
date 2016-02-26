@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use App\Repository;
 use App\Provider;
 
@@ -34,7 +35,7 @@ class BitbucketController extends Controller
             return response()->json(['success'=>false,'message'=>'I only want push events :P.'], 200);
         }
 
-        $payload = json_decode( stripslashes( $request->get('payload') ), true );
+        $payload = $request->all();
 
         if(!isset($payload['push']['changes'][0]['new'])) {
             return response()->json(['success'=>false,'message'=>'No changes found.'], 200);
@@ -49,8 +50,19 @@ class BitbucketController extends Controller
 
         $repository =   $this->provider
                         ->repositories()
-                        ->where('reference',$payload['repository']['uuid'])
+                        ->where('reference',$payload['repository']['name'])
                         ->first();
 
+        if(!$repository) {
+            return response()->json(['success'=>false,'message'=>'No repository configured found.'], 200);
+        }
+
+        try {
+            Artisan::call('git:pull', ['repository_id'=>$repository->id, '--tag'=>$payload['push']['changes'][0]['new']['name']]);
+            return response()->json(['success'=>true,'message'=>'Successfully deployed!'], 200);
+        }
+        catch(\Exception $exp) {
+            return response()->json(['success'=>false,'message'=>$exp->getMessage()], 200);
+        }
     }
 }
