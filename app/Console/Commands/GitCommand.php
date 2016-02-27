@@ -1,6 +1,7 @@
 <?php 
 namespace App\Console\Commands;
 
+use Log;
 use Illuminate\Console\Command;
 use App\Repository;
 
@@ -24,15 +25,21 @@ class GitCommand extends Command {
      */
     public function fire()
     {
+        Log::info('[Git pull] Begin');
+
         $repo_id = $this->argument('repository_id');
         $repo = Repository::find($repo_id);
 
         if(!$repo) {
+            Log::info('[Git pull] No repository found.');
+            Log::info('[Git pull] End');
             throw new \Exception('No repository with id '.$repo_id.' found.');
         }
 
         // Make sure we're in the right directory
-        $this->info('Changind directory to : ' . $repo->local_path);
+        $this->info('Changing directory to : ' . $repo->local_path);
+        Log::info('Changing directory to : ' . $repo->local_path);
+
         chdir($repo->local_path);
 
         exec( 'git reset --hard HEAD', $output);
@@ -53,7 +60,8 @@ class GitCommand extends Command {
         echo exec( 'chmod -R og-rx .git' );
 
         $this->info('Succesfully run git pull for '.$repo->title);
-
+        Log::info('Succesfully run git pull for '.$repo->title);
+        Log::info('[Git pull] End');
         return true;
     }
 
@@ -65,6 +73,7 @@ class GitCommand extends Command {
         if(is_array($output)) {
             foreach($output as $out) {
                 $this->info($out);
+                Log::info($out);
             }
         }
     }
